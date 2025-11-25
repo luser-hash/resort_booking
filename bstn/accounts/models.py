@@ -1,36 +1,32 @@
 from django.db import models
 from django_countries.fields import CountryField
 from decimal import Decimal
+from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 
 # purpose auth + identity
 
 
-class User(models.Model):
+class User(AbstractUser):
     USER_TYPES = (
         ('NORMAL', 'Normal'),
         ('ADMIN', 'Admin'),
     )
 
-    email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, unique=True)
-    password = models.CharField(max_length=16)
     full_name = models.CharField(max_length=50)
     user_type = models.CharField(max_length=20, choices=USER_TYPES)
     # verification/ status
     is_email_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=False)
-    is_staff = models.BooleanField(default=False)  # For django admin
-    is_superuser = models.BooleanField(default=False)  # Django admin
 
     # meta info
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.email
+        return self.full_name 
 
 
 # Profile (Guest)
