@@ -1,5 +1,6 @@
 from django.contrib.contenttypes.models import ContentType
 from rest_framework import serializers
+from datetime import date
 
 from listings import models
 from .models import RoomBooking
@@ -26,10 +27,12 @@ class RoomBookingSerializer(serializers.ModelSerializer):
 
 
 class RoomBookingCreateSerializer(serializers.ModelSerializer):
+    # collecting data from model  
     room_type = serializers.CharField()
     room_id = serializers.IntegerField()
 
     class Meta:
+        # create a room booking object from request body
         model = RoomBooking
         fields = [
             'room_type',
@@ -39,20 +42,35 @@ class RoomBookingCreateSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        room_type = data['room_type']
+        """
+        Docstring for validate
+        
+        Validate room type + room id
+        Ensures the room exists
+        attach room instance then validate the date.
+        Validate date order, no past check in, no zero/negetive nights, 
+        overlapping bookings.  
+        """
+        room_type = data['room_type'].lower()
         room_id = data['room_id']
+        check_in = data['check_in']
+        check_out = data['check_out']
 
-        # map room_type string -> Model
+        # map room_type string -> Model, converts string to model sent by user
         room_model_map = {
+            'hotel': models.HotelRoom,
             'hotelroom': models.HotelRoom,
+            'resort': models.ResortRoom,
             'resortroom': models.ResortRoom,
+            'homestay': models.HomeStayRoom,
             'homestayroom': models.HomeStayRoom,
         }
 
-        if room_type.lower() not in room_model_map:
+        if room_type not in room_model_map:
             raise serializers.ValidationError('Invalid room type!')
         
-        model = room_model_map[room_type.lower()]
+        # pick the model based on type
+        model = room_model_map[room_type]
 
         try:
             room_instance = model.objects.get(id=room_id)
@@ -60,6 +78,29 @@ class RoomBookingCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Room not found!')
         
         data['room_instance'] = room_instance
+
+        # Date Validation
+        # 1. Check out must be after check in, means check_out > check_in
+        if check_out <= check_in:
+            raise serializers.ValidationError('Check out must be after check in!')
+        
+        # 2. check in cannot be past, means check_in >= today
+        if check_in < date.today():
+            raise serializers.ValidationError('Check in cannot be past date!')
+        
+        # 3. Check overlapping bookings for this same room
+        existing_booking = RoomBooking.objects.filter(
+            room_type=ContentType.objects.get_for_model(room_instance),
+            room_id=room_instance.id,
+            status__in=['PENDING', 'CONFIRMED'],  # Only active bookings
+        ).filter(
+            check_in__lt=check_out,
+            check_out__gt=check_in,
+        )
+
+        if existing_booking.exists():
+            raise serializers.ValidationError('This room is already booked for the selected days!')
+
         return data
     
     def create(self, validated_data):
@@ -67,9 +108,11 @@ class RoomBookingCreateSerializer(serializers.ModelSerializer):
         nights = (validated_data['check_out'] - validated_data['check_in']).days
 
         # Automatically detects provider
-        provider = room.hotel.provider if hasattr(room, 'hotel') else room.homestay.provider if hasattr(room, 'homestay') else room.resort_rooms.provider
-
-        # Total Price
+        provider = room.provider
+        if provider is None:
+            raise Exception("Room has no provider linked!")
+        
+        # calculate the total price
         total_price = room.price_per_night * nights
 
         # Create Booking

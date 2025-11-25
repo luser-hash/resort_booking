@@ -162,8 +162,24 @@ class Room(models.Model):
     is_available = models.BooleanField(default=True)
     has_ac = models.BooleanField(default=False)
     has_heating = models.BooleanField(default=False)
-    
 
+    @property
+    def provider(self):
+        # HotelRoom -> has .hotel
+        if hasattr(self, 'hotel'):
+            return self.hotel.provider
+        
+        # HomeStayRoom -> has .homestay
+        if hasattr(self, 'homestay'):
+            return self.homestay.provider
+        
+        # ResortRoom -> has .resort
+        if hasattr(self, 'resort'):
+            return self.resort.provider
+        
+        return None
+    
+    
 class HotelRoom(Room):
     ROOM_TYPE = [
         ('SINGLE', 'Single'),
