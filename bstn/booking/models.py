@@ -24,6 +24,8 @@ class RoomBooking(models.Model):
     )
 
     # Generic reletions to any room type
+    # ContentType provides a way to refer to any model class
+    # Generic foreign key allows linking to any model instance dynamically
     room_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     room_id = models.PositiveIntegerField()
     room = GenericForeignKey('room_type', 'room_id')

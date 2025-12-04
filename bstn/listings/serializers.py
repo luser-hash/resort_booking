@@ -1,5 +1,13 @@
 from rest_framework import serializers
-from .models import Hotel, HotelRoom, Resort, ResortRoom, HomeStay, HomeStayRoom
+
+from .models import (
+    Hotel,
+    HotelRoom,
+    Resort,
+    ResortRoom,
+    HomeStay,
+    HomeStayRoom
+    )
 from accounts.models import ProviderProfile
 
 
@@ -53,7 +61,6 @@ class HotelSerializer(serializers.ModelSerializer):
             'has_elevator',
             'has_restaurant',
             'allows_walk_in',
-            
         ]
 
 

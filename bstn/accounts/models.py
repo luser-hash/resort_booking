@@ -3,9 +3,7 @@ from django_countries.fields import CountryField
 from decimal import Decimal
 from django.contrib.auth.models import AbstractUser
 
-# Create your models here.
-
-# purpose auth + identity
+# purpose: auth + identity
 
 
 class User(AbstractUser):
@@ -17,6 +15,7 @@ class User(AbstractUser):
     phone = models.CharField(max_length=20, unique=True)
     full_name = models.CharField(max_length=50)
     user_type = models.CharField(max_length=20, choices=USER_TYPES)
+
     # verification/ status
     is_email_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)
@@ -48,15 +47,17 @@ class GuestProfile(models.Model):
     )
     # relation to user, one to one means every user can have only one profile
     user = models.OneToOneField(  # OneToOne by design it's unique
-        User, 
-        on_delete=models.CASCADE, 
+        User,
+        on_delete=models.CASCADE,
         related_name='guest_profile'
         )
 
     # Basic guest info
     name = models.CharField(max_length=50)
     gender = models.CharField(max_length=20, choices=GENDER)
-    profile_image = models.ImageField(upload_to='profile/images', null=True, blank=True)
+    profile_image = models.ImageField(
+        upload_to='profile/images',
+        null=True, blank=True)
     country = CountryField()
     city = models.CharField(max_length=50)
     nationality = models.CharField(max_length=50, blank=True)
@@ -64,7 +65,8 @@ class GuestProfile(models.Model):
     # preferences
     preferred_language = models.CharField(max_length=20,  blank=True)
     preferred_currency = models.CharField(max_length=20, blank=True)
-    travel_style = models.CharField(max_length=20, choices=TRAVEL_STYLE, blank=True)
+    travel_style = models.CharField(
+        max_length=20, choices=TRAVEL_STYLE, blank=True)
     bio = models.TextField(blank=True)
 
     # safety /docs 

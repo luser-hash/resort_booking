@@ -1,8 +1,8 @@
 # Django workflow to create api:
 """
-    1. Create serializers for truning our models into json objects
-    2. Then create Viewsets so that we decide what to do when api request hit
-    3. then create routers for api endpoints
+    1. Create serializers for turning our models into json objects.
+    2. Then create Viewsets so that we decide what to do when api request hit.
+    3. then create routers for api endpoints.
 
     Runtime Order:
     Router -> ViewSet -> Serializer -> Response

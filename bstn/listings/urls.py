@@ -9,4 +9,6 @@ urlpatterns = [
     path('resorts/', api_views.ResorTListCreateAPIView.as_view(), name='resort-list-create'),
     path('homestay/', api_views.HomeStayListCreateAPIView.as_view(), name='homestay-list'),
     path('homestay/<int:homestay_id>/rooms/', api_views.HomeStayRoomListCreateAPIView.as_view(), name='homestay-rooms'),
+
+    path('rooms/available/', api_views.AvailableRoomsAPIView.as_view(), name='available-rooms')
 ]
