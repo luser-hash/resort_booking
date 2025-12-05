@@ -10,6 +10,7 @@
 
 from rest_framework import serializers
 from .models import ProviderProfile, User, GuestProfile
+from django.contrib.auth import get_user_model
 
 
 class UserMiniSerializer(serializers.ModelSerializer):
@@ -62,6 +63,23 @@ class ProviderProfileserializer(serializers.ModelSerializer):
         ]
 
 
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
 
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'full_name', 'phone', 'password']
+
+    def validate_phone(self, value):
+        if User.objects.filter(phone=value).exists():
+            raise serializers.ValidationError("A user with this phone already exists.")
+        return value
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
 
 

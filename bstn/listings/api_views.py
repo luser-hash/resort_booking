@@ -7,7 +7,7 @@ from rest_framework.exceptions import ValidationError
 
 from . import models
 from . import serializers
-from .services import get_available_rooms_for_model
+from .services import get_available_rooms_for_model, search_availability_stay
 
 
 class HotelListCreateAPIView(generics.ListCreateAPIView):
@@ -101,4 +101,33 @@ class AvailableRoomsAPIView(APIView):
         return Response(result)
 
 
+class SearchStaysAPIView(APIView):
+    def get(self, request):
+        check_in_str = request.query_params.get('check_in')
+        check_out_str = request.query_params.get('check_out')
+        room_type = request.query_params.get('room_type')
+        city = request.query_params.get('city')
 
+        if not check_in_str or not check_out_str:
+            raise ValidationError('Check in and check out are required!')
+        
+        # parse dates
+        try:
+            check_in = datetime.strptime(check_in_str, "%Y-%m-%d").date()
+            check_out = datetime.strptime(check_out_str, "%Y-%m-%d").date()
+        except ValueError:
+            raise ValidationError("Dates must be in YYYY-MM-DD format.")
+        
+        # basic rules
+        if check_out <= check_in:
+            raise ValidationError("check_out must be after check_in.")
+        if check_in < date.today():
+            raise ValidationError("check_in cannot be in the past.")
+        
+        # run core search
+        try:
+            stays = search_availability_stay(check_in, check_out, room_type, city)
+        except ValueError as e:
+            raise ValidationError(str(e))
+        
+        return Response(stays)

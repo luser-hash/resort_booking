@@ -10,5 +10,6 @@ urlpatterns = [
     path('homestay/', api_views.HomeStayListCreateAPIView.as_view(), name='homestay-list'),
     path('homestay/<int:homestay_id>/rooms/', api_views.HomeStayRoomListCreateAPIView.as_view(), name='homestay-rooms'),
 
-    path('rooms/available/', api_views.AvailableRoomsAPIView.as_view(), name='available-rooms')
+    path('rooms/available/', api_views.AvailableRoomsAPIView.as_view(), name='available-rooms'),
+    path('search/stays/', api_views.SearchStaysAPIView.as_view(), name='search-stays'),
 ]

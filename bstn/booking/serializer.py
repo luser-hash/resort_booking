@@ -2,6 +2,7 @@ from django.contrib.contenttypes.models import ContentType
 from rest_framework import serializers
 from datetime import date
 
+from accounts.models import User, ProviderProfile
 from listings import models
 from .models import RoomBooking
 
@@ -129,3 +130,83 @@ class RoomBookingCreateSerializer(serializers.ModelSerializer):
         return booking
 
 
+class GuestMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'first_name',
+            'email',
+        ]
+
+
+class ProviderMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProviderProfile
+        fields = [
+            'id',
+            'display_name',
+        ]
+
+
+class BookingDetailSerializer(serializers.ModelSerializer):
+    guest = GuestMiniSerializer(source='user', read_only=True)
+    provider = ProviderMiniSerializer(read_only=True)
+    room = serializers.SerializerMethodField()
+    nights = serializers.SerializerMethodField()
+
+    class Meta:
+        model = RoomBooking
+        fields = [
+            'id',
+            'status',
+            'total_price',
+            'check_in',
+            'check_out',
+            'nights',
+            'guest',
+            'provider',
+            'room',
+            'created_at',
+        ]
+
+    def get_nights(self, obj):
+        return (obj.check_out - obj.check_in).days
+    
+    def get_room(self, obj):
+        room = obj.room 
+        
+        if room is None:
+            return None
+        
+        # determine room type + parent stay
+        if hasattr(room, 'hotel'):
+            room_type = 'hotel'
+            stay = room.hotel
+        elif hasattr(room, 'resort'):
+            room_type = 'resort'
+            stay = room.resort
+        elif hasattr(room, 'homestay'):
+            room_type = 'homestay'
+            stay = room.homestay
+        else:
+            room_type = 'unknown'
+            stay = None
+
+        stay_data = None
+        if stay is None:
+            stay_data = {
+                'id': stay.id,
+                'name': getattr(stay, 'name', ''),
+                'city': getattr(stay, 'city', ''),
+                'contry': str(getattr(stay, 'country', '')),
+            }
+        
+        return {
+            'id': room.id,
+            'name': getattr(room, 'room_name', ''),
+            'type': room_type,
+            'price_per_night': room.price_per_night,
+            'max_guest': room.max_guest_per_room,
+            'stay': stay_data,
+        }
