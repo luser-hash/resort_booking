@@ -20,6 +20,19 @@ class RoomBookingCreateAPIView(generics.CreateAPIView):
     serializer_class = RoomBookingCreateSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        # run default create first
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        booking = serializer.save()
+
+        # Now re-serialize with detail serializer
+        from .serializer import BookingDetailSerializer
+        detail = BookingDetailSerializer(booking)
+
+        headers = self.get_success_headers(detail.data)
+        return Response(detail.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
 class MyRoomBookingsAPIView(generics.ListAPIView):
     serializer_class = BookingDetailSerializer

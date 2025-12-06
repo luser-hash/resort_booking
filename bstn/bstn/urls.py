@@ -26,6 +26,8 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+from accounts.auth_views import CustomTokenObtainPairView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     # Schema endpoint
@@ -38,7 +40,7 @@ urlpatterns = [
     path('api/listings/', include('listings.urls')),
     path('api/bookings/', include('booking.urls')),
 
-    path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/', include('accounts.auth_urls')),
 ]

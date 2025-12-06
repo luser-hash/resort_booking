@@ -7,10 +7,9 @@
     Runtime Order:
     Router -> ViewSet -> Serializer -> Response
 """
-
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from .models import ProviderProfile, User, GuestProfile
-from django.contrib.auth import get_user_model
 
 
 class UserMiniSerializer(serializers.ModelSerializer):
@@ -82,4 +81,67 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+
+class BecomeProviderSerializer(serializers.ModelSerializer):
+    """
+    This serializer ensures that user doesn't already have a provider profile.
+    Creats a new ProviderProfile connected to the user
+    """
+    class Meta:
+        model = ProviderProfile
+        fields = [
+            'display_name',
+            'business_type',
+            'description',
+            'country',
+            'city',
+            'address',
+            'website',
+            'phone',
+        ]
+
+        def validate(self, attrs):
+            user = self.context['request'].user
+            if ProviderProfile.objects.filter(user=user).exists():
+                raise serializers.ValidationError('You already have a profile')
+            return attrs
+        
+        def create(self, validated_data):
+            user = self.context['request'].user
+            # kyc_status default pending on model
+            provider = ProviderProfile.objects.create(
+                user=user,
+                **validated_data
+            )
+            return provider
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Extends JWT login response with user info (role, provider_id).
+    """
+
+    def validate(self, attrs):
+        data = super().validate(attrs)  # this gives you "access" and "refresh"
+
+        user = self.user  # the logged-in user
+
+        # Determine role
+        role = "guest"
+        provider_profile = ProviderProfile.objects.filter(user=user).first()
+
+        if user.is_staff or user.is_superuser:
+            role = "admin"
+        elif provider_profile:
+            role = "provider"
+
+        data["user"] = {
+            "id": user.id,
+            "full_name": getattr(user, "full_name", user.get_username()),
+            "email": getattr(user, "email", ""),
+            "role": role,
+            "provider_id": provider_profile.id if provider_profile else None,
+        }
+
+        return data
 

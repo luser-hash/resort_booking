@@ -40,6 +40,7 @@ class HomeStayRoomListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = serializers.HomeStayRoomSerializer
 
 
+# Returns available rooms across hotel /resorts/ homestay for a date range. 
 class AvailableRoomsAPIView(APIView):
     # Availablity engine for any room model exposed as one API endpoint.
     # GET /api/listings/rooms/available/?check_in=2024-10-01&check_out=2024-10-05&room_type=hotelroom|resortroom|homestayroom 
@@ -101,7 +102,12 @@ class AvailableRoomsAPIView(APIView):
         return Response(result)
 
 
+# Api View for searching rooms. 
 class SearchStaysAPIView(APIView):
+    """
+    For given check-in, check-out dates and stay types and city it searches and 
+    respond back to the frontend. 
+    """
     def get(self, request):
         check_in_str = request.query_params.get('check_in')
         check_out_str = request.query_params.get('check_out')

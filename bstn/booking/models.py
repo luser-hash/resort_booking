@@ -14,6 +14,7 @@ class RoomBooking(models.Model):
         ('CONFIRMED', 'Confirmed'),
         ('CANCELLED', 'Cancelled'),
         ('COMPLETED', 'Completed'),
+        ('REJECTED', 'Rejected'),
     ]
 
     # Who booked

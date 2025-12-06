@@ -1,0 +1,298 @@
+PROJECT PROGRESS SUMMARY (Milestones Completed So Far)
+1. Account System
+Custom User Model
+
+Implemented a custom User model with:
+
+email (unique)
+
+phone (unique)
+
+full_name
+
+is_active, is_staff, is_superuser
+
+user_type placeholder (optional for future use)
+
+Password hashing handled with set_password().
+
+GuestProfile
+
+Created GuestProfile with:
+
+Basic identity
+
+Preferences
+
+Emergency contacts
+
+Optional passport details
+
+Linked via OneToOneField(User).
+
+ProviderProfile
+
+Created ProviderProfile with:
+
+Business information
+
+Contact fields
+
+KYC fields (kyc_status, document_type, etc.)
+
+Payout method fields
+
+Stats: average_rating, total_reviews, total_bookings
+
+Linked via OneToOneField(User).
+
+Become Provider Flow
+
+Added BecomeProviderAPIView:
+
+Authenticated users can create a provider profile.
+
+Automatically upgrades a user to provider role.
+
+Enables access to provider-only endpoints.
+
+2. Listings System (Hotels / Homestays / Resorts)
+Stays
+
+Implemented 3 stay models:
+
+Hotel
+
+HomeStay
+
+Resort
+
+Each linked to a provider (owner).
+
+Rooms
+
+Created abstract Room class with:
+
+room_type, room_name, price_per_night, max_guest_per_room
+
+amenities, AC/heating flags
+
+availability flag
+
+Implemented:
+
+HotelRoom(Room)
+
+HomeStayRoom(Room)
+
+ResortRoom(Room)
+
+Each linked to its parent stay via ForeignKey.
+
+3. Universal Booking Engine
+RoomBooking Model
+
+Built using ContentType + GenericForeignKey:
+
+Enables booking any room type (hotel/homestay/resort) with one model.
+
+Stores:
+
+user (guest)
+
+provider (derived automatically from room)
+
+room_type + room_id
+
+check_in, check_out
+
+total_price
+
+status: PENDING, CONFIRMED, CANCELLED, COMPLETED
+
+Booking Creation
+
+Validates:
+
+room type validity
+
+room existence
+
+date ordering (check_in < check_out)
+
+no past check-in dates
+
+overlap prevention (no double-booking)
+
+Calculates:
+
+nights
+
+total_price
+
+provider detection via room.provider
+
+Booking APIs
+
+Booking Create:
+POST /api/bookings/rooms/room-booking/
+
+Guest bookings list:
+GET /api/bookings/rooms/my/
+
+Provider bookings list:
+GET /api/bookings/rooms/provider/<provider_id>/
+
+4. Booking Lifecycle (with Role-Based Permissions)
+Guest Actions
+
+Cancel booking (PENDING or CONFIRMED before check_in):
+POST /api/bookings/rooms/<id>/cancel/
+
+Provider Actions
+
+Confirm booking (PENDING → CONFIRMED):
+POST /api/bookings/rooms/<id>/confirm/
+
+Reject booking (PENDING → CANCELLED):
+POST /api/bookings/rooms/<id>/reject/
+
+Automatic Completion
+
+Implemented auto_complete_finished_bookings()
+
+Automatically updates:
+
+CONFIRMED → COMPLETED after check_out
+
+Called inside booking list endpoints to simulate cron.
+
+5. Availability Engine
+get_available_rooms_for_model()
+
+Core function checking:
+
+date overlap
+
+active booking statuses
+
+room availability
+
+Works for ANY room model.
+
+AvailableRoomsAPIView
+
+Unified endpoint returning available rooms for:
+
+hotel
+
+homestay
+
+resort
+
+Supports filtering by room type.
+
+Aggregates room data with room_type label.
+
+6. Search Engine (Stay-level Search)
+search_available_stays()
+
+Uses availability engine to:
+
+find available rooms
+
+group rooms by stay (hotel/homestay/resort)
+
+compute:
+
+min_price_per_night
+
+max_price_per_night
+
+available_room_count
+
+Supports filtering by:
+
+stay type
+
+city
+
+Search Endpoint
+
+GET /api/listings/search/stays/?check_in=&check_out=&room_type=&city=
+
+Returns aggregated stay cards:
+
+{
+  "id": 8,
+  "type": "hotel",
+  "name": "Forest Haven Lodge",
+  "city": "Bandarban",
+  "country": "BD",
+  "min_price_per_night": 3200,
+  "max_price_per_night": 5500,
+  "available_room_count": 4
+}
+
+7. Booking Detail JSON (Frontend Ready)
+BookingDetailSerializer
+
+Nested data for:
+
+guest
+
+provider
+
+room summary
+
+stay summary
+
+nights calculation
+
+Used in:
+
+My bookings
+
+Provider bookings
+
+Confirm/Cancel/Reject responses
+
+8. Authentication + Role System
+JWT Auth (simplejwt)
+
+Login:
+POST /api/auth/token/
+
+Refresh:
+POST /api/auth/token/refresh/
+
+Register:
+POST /api/auth/register/
+
+Role Handling
+
+Providers determined by existence of ProviderProfile.
+
+Permission classes implemented:
+
+IsProvider
+
+IsAdmin
+
+Applied to booking lifecycle views.
+
+MILESTONES COMPLETED
+
+✔ Accounts System
+✔ Custom User Model
+✔ Guest & Provider Profiles
+✔ Listings (Hotels, Homestays, Resorts)
+✔ Room Models
+✔ Universal Booking Engine
+✔ Availability Engine
+✔ Stay Search Engine
+✔ Booking Lifecycle (Confirm/Cancel/Reject/Complete)
+✔ Booking Detail JSON
+✔ JWT Authentication
+✔ Provider Role System
+✔ Permission Protection Across APIs

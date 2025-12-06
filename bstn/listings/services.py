@@ -81,7 +81,11 @@ def search_availability_stay(check_in, check_out, room_type=None, city=None):
         type_label = cfg['type_label']
 
         # use existing availability engine
-        available_rooms = get_available_rooms_for_model(room_model)
+        available_rooms = get_available_rooms_for_model(
+            room_model,
+            check_in,
+            check_out
+            )
 
         # for each available room
         # find it's parent stay, applies filter, group by stay, returns a list
@@ -107,8 +111,5 @@ def search_availability_stay(check_in, check_out, room_type=None, city=None):
             else:
                 s = stays[stay_id]
                 s['available_room_count'] += 1
-                
     # Return as list
     return list(stays.values())
-
-
